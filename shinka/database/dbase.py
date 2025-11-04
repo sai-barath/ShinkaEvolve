@@ -2013,3 +2013,34 @@ class ProgramDatabase:
         """
         Get all programs for a specific island.
         """
+        if not self.cursor:
+            raise ConnectionError("DB not connected.")
+        self.cursor.execute(
+            "SELECT * FROM programs WHERE island_idx = ?", (island_idx,)
+        )
+        rows = self.cursor.fetchall()
+        programs = [self._program_from_row(row) for row in rows]
+        return [p for p in programs if p is not None]
+
+    def get_diversity_analyzer(self, config=None):
+        """
+        Create and return an IslandDiversityAnalyzer for this database.
+        
+        Args:
+            config: Optional DiversityConfig instance
+            
+        Returns:
+            IslandDiversityAnalyzer instance
+            
+        Example:
+            >>> analyzer = db.get_diversity_analyzer()
+            >>> metrics = analyzer.compute_system_diversity()
+            >>> print(f"Mean diversity: {metrics['mean_diversity']:.3f}")
+        """
+        from .diversity import IslandDiversityAnalyzer, DiversityConfig
+        
+        if config is None:
+            config = DiversityConfig()
+        
+        return IslandDiversityAnalyzer(self, config)
+
